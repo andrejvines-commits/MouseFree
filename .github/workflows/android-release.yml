@@ -1,0 +1,46 @@
+name: Publicar APK Android
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android_app
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+
+      - name: Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Instalar dependências
+        run: flutter pub get
+
+      - name: Analisar e testar
+        run: |
+          flutter analyze
+          flutter test
+
+      - name: Gerar APK
+        run: flutter build apk --debug
+
+      - name: Criar release e enviar APK
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: >
+          gh release create "$TAG"
+          "android_app/build/app/outputs/flutter-apk/app-debug.apk#app-debug.apk"
+          --title "MouseFree $TAG"
+          --notes "Inclui o botão Atualizar aplicativo."

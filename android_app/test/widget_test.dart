@@ -16,5 +16,6 @@ void main() {
     expect(find.text('Mouse Controller'), findsOneWidget);
     expect(find.text('Endereço WebSocket'), findsOneWidget);
     expect(find.text('Conectar'), findsOneWidget);
+    expect(find.text('Atualizar aplicativo'), findsOneWidget);
   });
 }

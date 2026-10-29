@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../providers/connection_provider.dart';
 
@@ -10,8 +11,24 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final _address = TextEditingController(text: 'ws://192.168.1.10:8765/ws');
+  static final _latestApkUri = Uri.parse(
+    'https://github.com/andrejvines-commits/MouseFree/'
+    'releases/latest/download/app-debug.apk',
+  );
+
+  final _address = TextEditingController();
   final _token = TextEditingController();
+
+  Future<void> _downloadLatestVersion() async {
+    final opened = await launchUrl(
+      _latestApkUri,
+      mode: LaunchMode.externalApplication,
+    );
+    if (!mounted || opened) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Não foi possível abrir o download.')),
+    );
+  }
 
   @override
   void dispose() {
@@ -60,6 +77,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   ? connection.disconnect
                   : () => connection.connect(_address.text.trim(), _token.text),
               child: Text(connection.connected ? 'Desconectar' : 'Conectar')),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: _downloadLatestVersion,
+            icon: const Icon(Icons.system_update),
+            label: const Text('Atualizar aplicativo'),
+          ),
           if (connection.error != null) ...[
             const SizedBox(height: 8),
             Text(connection.error!,
