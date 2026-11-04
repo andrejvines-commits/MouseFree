@@ -59,13 +59,21 @@ jobs:
         with:
           name: windows-exe
           path: release
+      - name: Conferir instaladores
+        run: ls -la release
       - name: Criar release
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
         run: >
           gh release create "$TAG"
-          "release/app-debug.apk#app-debug.apk"
-          "release/MouseFree-PC.exe#MouseFree-PC.exe"
           --title "MouseFree $TAG"
           --notes "Inclui conexão simplificada por código e o executável para Windows."
+      - name: Enviar instaladores
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: >
+          gh release upload "$TAG"
+          "release/app-debug.apk#app-debug.apk"
+          "release/MouseFree-PC.exe#MouseFree-PC.exe"
