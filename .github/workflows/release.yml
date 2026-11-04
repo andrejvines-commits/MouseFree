@@ -61,19 +61,11 @@ jobs:
           path: release
       - name: Conferir instaladores
         run: ls -la release
-      - name: Criar release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
-        run: >
-          gh release create "$TAG"
-          --title "MouseFree $TAG"
-          --notes "Inclui conexão simplificada por código e o executável para Windows."
-      - name: Enviar instaladores
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
-        run: >
-          gh release upload "$TAG"
-          "release/app-debug.apk#app-debug.apk"
-          "release/MouseFree-PC.exe#MouseFree-PC.exe"
+      - name: Publicar release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: MouseFree ${{ github.ref_name }}
+          body: Inclui conexão simplificada por código e o executável para Windows.
+          files: |
+            release/app-debug.apk
+            release/MouseFree-PC.exe
