@@ -1,0 +1,71 @@
+name: Publicar MouseFree
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android_app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - run: flutter build apk --debug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: android_app/build/app/outputs/flutter-apk/app-debug.apk
+
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: desktop_server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Instalar dependências
+        run: py -3.13 -m pip install -r requirements.txt pyinstaller
+      - name: Gerar executável Windows
+        run: >
+          py -3.13 -m PyInstaller --noconfirm --clean --onefile --windowed
+          --name MouseFree-PC --collect-all uvicorn desktop_app.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-exe
+          path: desktop_server/dist/MouseFree-PC.exe
+
+  release:
+    needs: [android, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: android-apk
+          path: release
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-exe
+          path: release
+      - name: Criar release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: >
+          gh release create "$TAG"
+          "release/app-debug.apk#app-debug.apk"
+          "release/MouseFree-PC.exe#MouseFree-PC.exe"
+          --title "MouseFree $TAG"
+          --notes "Inclui conexão simplificada por código e o executável para Windows."

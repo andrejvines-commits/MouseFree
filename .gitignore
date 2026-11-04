@@ -1,0 +1,6 @@
+desktop_server/.venv/
+desktop_server/.venv313/
+desktop_server/__pycache__/
+desktop_server/build/
+desktop_server/dist/
+*.spec

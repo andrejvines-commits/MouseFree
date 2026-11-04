@@ -13,8 +13,8 @@ void main() {
   testWidgets('shows the connection form', (WidgetTester tester) async {
     await tester.pumpWidget(const MouseControllerApp());
 
-    expect(find.text('Mouse Controller'), findsOneWidget);
-    expect(find.text('Endereço WebSocket'), findsOneWidget);
+    expect(find.text('MouseFree'), findsOneWidget);
+    expect(find.text('Código de conexão'), findsOneWidget);
     expect(find.text('Conectar'), findsOneWidget);
     expect(find.text('Atualizar aplicativo'), findsOneWidget);
   });

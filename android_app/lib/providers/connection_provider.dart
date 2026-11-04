@@ -14,6 +14,16 @@ class ConnectionProvider extends ChangeNotifier {
   String status = 'Desconectado';
   String? error;
 
+  Future<void> connectWithConnectionCode(String connectionCode) async {
+    final parts = connectionCode.trim().split('|');
+    if (parts.length != 2 || parts.any((part) => part.trim().isEmpty)) {
+      error = 'Cole o código gerado no aplicativo do PC.';
+      notifyListeners();
+      return;
+    }
+    await connect(parts[0].trim(), parts[1].trim());
+  }
+
   Future<void> connect(String address, String token) async {
     error = null;
     if (address.isEmpty || token.trim().isEmpty) {
