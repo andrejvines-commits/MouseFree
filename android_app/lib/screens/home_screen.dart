@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../providers/connection_provider.dart';
+import 'qr_scanner_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -12,16 +13,53 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  static final _latestApkUri = Uri.parse(
-    'https://github.com/andrejvines-commits/MouseFree/'
-    'releases/latest/download/app-debug.apk',
-  );
-
   final _connectionCode = TextEditingController();
 
-  Future<void> _downloadLatestVersion() async {
+  Future<void> _scanQrCode(ConnectionProvider connection) async {
+    final code = await Navigator.of(context).push<String>(
+      MaterialPageRoute(builder: (_) => const QrScannerScreen()),
+    );
+    if (!mounted || code == null) return;
+
+    setState(() => _connectionCode.text = code);
+    await connection.connectWithConnectionCode(code);
+  }
+
+  Future<void> _checkForUpdate(ConnectionProvider connection) async {
+    final update = await connection.checkForUpdate();
+    if (!mounted || update == null) return;
+
+    if (!update.updateAvailable) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('App atualizado.')),
+      );
+      return;
+    }
+
+    final downloadUri = update.downloadUri;
+    final download = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Atualização disponível'),
+        content: Text('A versão ${update.latestVersion} está disponível.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Agora não'),
+          ),
+          FilledButton(
+            onPressed: downloadUri == null
+                ? null
+                : () => Navigator.pop(context, true),
+            child: const Text('Baixar'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || download != true || downloadUri == null) return;
+
     final opened = await launchUrl(
-      _latestApkUri,
+      downloadUri,
       mode: LaunchMode.externalApplication,
     );
     if (!mounted || opened) return;
@@ -66,12 +104,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 enableSuggestions: false,
                 decoration: const InputDecoration(
                   labelText: 'Código de conexão',
-                  hintText: 'Cole o código copiado no PC',
-                  helperText:
-                      'No PC, abra o MouseFree e toque em Copiar código.',
+                  hintText: 'Leia o QR Code ou cole o código do PC',
+                  helperText: 'No PC, abra o MouseFree e mostre o QR Code.',
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: connection.connected
+                    ? null
+                    : () => _scanQrCode(connection),
+                icon: const Icon(Icons.qr_code_scanner),
+                label: const Text('Ler QR Code'),
+              ),
+              const SizedBox(height: 8),
               FilledButton(
                 onPressed: connection.connected
                     ? connection.disconnect
@@ -82,9 +127,21 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 8),
               OutlinedButton.icon(
-                onPressed: _downloadLatestVersion,
-                icon: const Icon(Icons.system_update),
-                label: const Text('Atualizar aplicativo'),
+                onPressed: connection.checkingForUpdate
+                    ? null
+                    : () => _checkForUpdate(connection),
+                icon: connection.checkingForUpdate
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.system_update),
+                label: Text(
+                  connection.checkingForUpdate
+                      ? 'Procurando atualizações...'
+                      : 'Atualizar aplicativo',
+                ),
               ),
               if (connection.error != null) ...[
                 const SizedBox(height: 8),

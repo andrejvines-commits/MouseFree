@@ -16,6 +16,7 @@ void main() {
     expect(find.text('MouseFree'), findsOneWidget);
     expect(find.text('Código de conexão'), findsOneWidget);
     expect(find.text('Conectar'), findsOneWidget);
+    expect(find.text('Ler QR Code'), findsOneWidget);
     expect(find.text('Atualizar aplicativo'), findsOneWidget);
   });
 }

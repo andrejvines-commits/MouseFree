@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="Mouse Controller Server",
-    version="1.2.0",
+    version="1.3.0",
 )
 
 token_manager = TokenManager()

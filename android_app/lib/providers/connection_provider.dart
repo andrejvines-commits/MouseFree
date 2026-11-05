@@ -4,15 +4,34 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 
 import '../models/protocol_message.dart';
+import '../services/github_update_service.dart';
 import '../services/websocket_service.dart';
 
 class ConnectionProvider extends ChangeNotifier {
+  static const appVersion = '1.3.0';
   final WebSocketService _service = WebSocketService();
+  final GithubUpdateService _updateService = GithubUpdateService();
   StreamSubscription<String>? _messages;
   bool connected = false;
   bool _awaitingAuthentication = false;
   String status = 'Desconectado';
   String? error;
+  bool checkingForUpdate = false;
+
+  Future<UpdateCheck?> checkForUpdate() async {
+    checkingForUpdate = true;
+    error = null;
+    notifyListeners();
+    try {
+      return await _updateService.check(appVersion);
+    } catch (exception) {
+      error = 'Não foi possível procurar atualizações: $exception';
+      return null;
+    } finally {
+      checkingForUpdate = false;
+      notifyListeners();
+    }
+  }
 
   Future<void> connectWithConnectionCode(String connectionCode) async {
     final parts = connectionCode.trim().split('|');
