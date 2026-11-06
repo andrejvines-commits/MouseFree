@@ -16,7 +16,7 @@ from PIL import ImageTk
 from app import app, token_manager
 
 
-APP_VERSION = "1.3.0"
+APP_VERSION = "1.3.1"
 PORT = 8765
 LATEST_RELEASE_API = (
     "https://api.github.com/repos/andrejvines-commits/MouseFree/releases/latest"
@@ -58,6 +58,7 @@ class MouseFreeDesktopApp:
         self.server: uvicorn.Server | None = None
         self.server_thread: threading.Thread | None = None
         self._starting_at: float | None = None
+        self._server_error: str | None = None
 
         self.address = f"ws://{local_ip_address()}:{PORT}/ws"
         self.connection_code = f"{self.address}|{token_manager.token}"
@@ -131,23 +132,33 @@ class MouseFreeDesktopApp:
         if self.server_thread and self.server_thread.is_alive():
             return
 
+        self._server_error = None
         self.server = uvicorn.Server(
             uvicorn.Config(app, host="0.0.0.0", port=PORT, log_level="warning")
         )
-        self.server_thread = threading.Thread(target=self.server.run, daemon=True)
+        self.server_thread = threading.Thread(target=self._run_server, daemon=True)
         self.server_thread.start()
         self._starting_at = time.monotonic()
         self.start_button.configure(state="disabled")
         self.status.set("Iniciando servidor...")
         self.wait_for_server()
 
+    def _run_server(self) -> None:
+        try:
+            if self.server:
+                self.server.run()
+        except BaseException as exception:
+            self._server_error = f"{type(exception).__name__}: {exception}"
+
     def wait_for_server(self) -> None:
         if self.server and self.server.started:
             self.status.set(f"Servidor ativo em {self.address}")
             return
         if not self.server_thread or not self.server_thread.is_alive():
-            self.status.set("Não foi possível iniciar. A porta 8765 pode estar em uso.")
+            detail = self._server_error or "A porta 8765 pode estar em uso."
+            self.status.set(f"Não foi possível iniciar: {detail}")
             self.start_button.configure(state="normal")
+            messagebox.showerror("MouseFree", f"Não foi possível iniciar o servidor.\n{detail}")
             return
         if self._starting_at and time.monotonic() - self._starting_at > 10:
             self.status.set("A inicialização demorou. Verifique a porta 8765.")

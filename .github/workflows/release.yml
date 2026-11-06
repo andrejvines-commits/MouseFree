@@ -41,7 +41,9 @@ jobs:
       - name: Gerar executável Windows
         run: >
           py -3.13 -m PyInstaller --noconfirm --clean --onefile --windowed
-          --name MouseFree-PC --collect-all uvicorn --collect-all qrcode desktop_app.py
+          --name MouseFree-PC --collect-all uvicorn --collect-all fastapi
+          --collect-all starlette --collect-all pydantic --collect-all pydantic_core
+          --collect-all qrcode desktop_app.py
       - uses: actions/upload-artifact@v4
         with:
           name: windows-exe

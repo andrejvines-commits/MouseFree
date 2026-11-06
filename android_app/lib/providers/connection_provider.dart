@@ -8,7 +8,7 @@ import '../services/github_update_service.dart';
 import '../services/websocket_service.dart';
 
 class ConnectionProvider extends ChangeNotifier {
-  static const appVersion = '1.3.0';
+  static const appVersion = '1.3.1';
   final WebSocketService _service = WebSocketService();
   final GithubUpdateService _updateService = GithubUpdateService();
   StreamSubscription<String>? _messages;
